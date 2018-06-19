@@ -124,6 +124,29 @@ klnP add_kmer( const char* kmer, KSP ks ) {
   }
 }
 
+/* Just like add_kmer, except...
+   Tests if the revcom form of the kmer string is
+   topologically less than the form given. If so, 
+   adds that instead. This is a cheap way to handle
+   the fact that reverse complement kmers can (in
+   some contexts) be considered the same kmer as
+   the not reverse complemented form.
+*/
+klnP add_canonical_kmer( const char* kmer, KSP ks ) {
+  char revcom_kmer_str[ MAX_K + 1];
+  strncpy( revcom_kmer_str, kmer, ks->k );
+  revcom_kmer( revcom_kmer_str, ks->k );
+
+  if ( strcmp( kmer, revcom_kmer_str ) < 0 ) {
+    return add_kmer( kmer, ks );
+  }
+  else {
+    return add_kmer( revcom_kmer_str, ks );
+  }
+}
+
+
+
 /* get_kmer
    This function returns the klnP (leaf node pointer) associated with
    this kmer, if it is present in the data structure. NULL if it is
@@ -206,6 +229,20 @@ klnP get_kmer( const char* kmer, KSP ks ) {
     return NULL;
   }
 }
+
+klnP get_canonical_kmer( const char* kmer, KSP ks ) {
+  char revcom_kmer_str[ MAX_K + 1];
+  strncpy( revcom_kmer_str, kmer, ks->k );
+  revcom_kmer( revcom_kmer_str, ks->k );
+
+  if ( strcmp( kmer, revcom_kmer_str ) < 0 ) {
+    return get_kmer( kmer, ks );
+  }
+  else {
+    return get_kmer( revcom_kmer_str, ks );
+  }
+}
+
 
 /* Returns 0 => was present, now it's gone
            1 => was never there!

@@ -5,7 +5,7 @@
 #include <getopt.h>
 #include "kmer.h"
 
-#define NUM_TESTS (10000000)
+#define NUM_TESTS (1000000)
 #define MAX_COUNTS (511)
 typedef struct kmer_data {
   size_t count;
@@ -18,7 +18,7 @@ void search_kmer_tree( ktnP tree_node,
 		       size_t depth, size_t* hist );
 
 void help( void ) {
-  printf( "test_kmer -k <kmer length>\n" );
+  printf( "test_kmer -k <kmer length> -c [canonical kmers]\n" );
   printf( "Tests the kmer.o object\n" );
   exit( 0 );
 }
@@ -28,6 +28,7 @@ int main ( int argc, char* argv[] ) {
   extern int optin;
 
   int ich, i;
+  int canonical_kmer = 0;
   size_t k;
   char* kmer_str;
   KSP kmers;
@@ -37,13 +38,16 @@ int main ( int argc, char* argv[] ) {
   if( argc == 1 ) {
     help();
   }
-  while( (ich=getopt( argc, argv, "k:h" )) != -1 ) {
+  while( (ich=getopt( argc, argv, "k:hc" )) != -1 ) {
     switch(ich) {
     case 'k' :
       k = (size_t)atoi( optarg );
       break;
     case 'h' :
       help();
+    case 'c' :
+      canonical_kmer = 1;
+      break;
     default :
       help();
     }
@@ -54,9 +58,21 @@ int main ( int argc, char* argv[] ) {
   
   for( i = 0; i < NUM_TESTS; i++ ) {
     make_random_kmer( kmer_str, k );
-    kmer = get_kmer( kmer_str, kmers );
+
+    if ( canonical_kmer ) {
+      kmer = get_canonical_kmer( kmer_str, kmers );
+    }
+    else {
+      kmer = get_kmer( kmer_str, kmers );
+    }
+    
     if ( kmer == NULL ) {
-      kmer = add_kmer( kmer_str, kmers );
+      if ( canonical_kmer ) {
+	kmer = add_canonical_kmer( kmer_str, kmers );
+      }
+      else {
+	kmer = add_kmer( kmer_str, kmers );
+      }
       data = (kd*)malloc(sizeof(kd));
       data->count = 0;
       kmer->data = data;
@@ -64,9 +80,20 @@ int main ( int argc, char* argv[] ) {
     increment_kmer_count( kmer );
     
     revcom_kmer( kmer_str, k );
-    kmer = get_kmer( kmer_str, kmers );
+    if ( canonical_kmer ) {
+      kmer = get_canonical_kmer( kmer_str, kmers );
+    }
+    else {
+      kmer = get_kmer( kmer_str, kmers );
+    }
+
     if ( kmer == NULL ) {
-      kmer = add_kmer( kmer_str, kmers );
+      if ( canonical_kmer ) {
+	kmer = add_canonical_kmer( kmer_str, kmers );
+      }
+      else {
+	kmer = add_kmer( kmer_str, kmers );
+      }
       data = (kd*)malloc(sizeof(kd));
       data->count = 0;
       kmer->data = data;

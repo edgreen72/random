@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#define MAX_K (35) // biggest K we can deal with
+#define MAX_K (63) // biggest K we can deal with
 #define K_AR_SIZE (12) // default length of the array size of the kmer structure
 #define MAX_HKC_PER_K (64) // biggest number of HKC that a k can point to
 
@@ -31,7 +31,9 @@ typedef struct kmers* KSP;
 /* Function prototypes */
 KSP init_KSP( int k );
 klnP add_kmer( const char* kmer, KSP ks );
+klnP add_canonical_kmer( const char* kmer, KSP ks );
 klnP get_kmer( const char* kmer, KSP ks );
+klnP get_canonical_kmer( const char* kmer, KSP ks );
 int remove_kmer( const char* kmer, KSP ks );
 int kmer2inx( const char* kmer,
               const size_t kmer_len,
