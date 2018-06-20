@@ -4,6 +4,7 @@
 #include <string.h>
 #include <getopt.h>
 #include "kmer.h"
+#include "file_io.h"
 
 #define NUM_TESTS (1000000)
 #define MAX_COUNTS (511)
