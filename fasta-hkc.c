@@ -111,12 +111,44 @@ int main ( int argc, char* argv[] ) {
   else {
     fclose( fp );
   }
+
+  /* Get a handle on the input file to pass to parser */
+  if ( is_gz( fn ) ) {
+    gzipped = 1;
+    fprintf( stderr, "Opening gzipped file: %s\n", fn );
+    fp_gz = gzopen( fn, "r" );
+    if ( fp_gz == NULL ) {
+      fprintf( stderr,
+	       "ERROR: Problem reading compressed fasta file.\n" );
+      exit( 1 );
+    }
+  }
+  else {
+    fp = fileOpen( fn, "r" );
+    fprintf( stderr, "Opening file: %s\n", fn );
+    if ( fp == NULL ) {
+      fprintf( stderr,
+	       "ERROR: Problem reading fasta file.\n" );
+      exit( 1 );
+    }
+  }
+
+  printf( "%lu\t.\n", ks->k );
+  fprintf( stderr, "[Reading fasta sequences for hkcs]" );
+  while( read_status == 0 ) {
+    if ( gzipped ) {
+      read_status = gz_read_next_fasta( fp_gz, seq );
+    }
+    else {
+      read_status = read_next_fasta( fp, seq );
+    }
+    if ( read_status == 0 ) {
+      find_hkcs( seq, kmers );
+    }
+  }
   /* Like Elsa says, "Let it go!" */
   free(seq);
 
-  fprintf( stderr, "[Writing histogram]\n" );
-  print_hist( kmers );
-  
 }
 
 void add_kmers_from_seq( const ChrP seq, KSP kmers ) {

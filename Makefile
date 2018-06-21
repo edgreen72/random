@@ -1,5 +1,6 @@
 CC=gcc
-CFLAGS=-gdwarf-2 -g
+#CFLAGS=-gdwarf-2 -g
+CFLAGS=-O2
 
 file_io.o : file_io.h file_io.c
 	echo "Making file_io.o ..."

@@ -3,7 +3,7 @@
 #include <ctype.h>
 #include <string.h>
 #define MAX_K (63) // biggest K we can deal with
-#define K_AR_SIZE (12) // default length of the array size of the kmer structure
+#define K_AR_SIZE (14) // default length of the array size of the kmer structure
 #define MAX_HKC_PER_K (64) // biggest number of HKC that a k can point to
 
 typedef struct kmer_tree_node {
