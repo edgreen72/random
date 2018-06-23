@@ -17,7 +17,8 @@ void increment_kmer_count( klnP kmer );
 short unsigned int get_kmer_count( klnP kmer );
 void print_hist( KSP kmers );
 void search_kmer_tree( ktnP tree_node,
-		       size_t depth, size_t* hist );
+		       size_t depth,
+		       short unsigned int* hist );
 void add_kmers_from_seq( ChrP seq, KSP kmers );
 void find_and_write_hkcs( ChrP seq, KSP kmers );
 
@@ -223,8 +224,8 @@ void find_and_write_hkcs( const ChrP seq, const KSP kmers ) {
 
 void print_hist( KSP kmers ) {
   size_t i, len;
-  size_t* hist;
-  hist = (size_t*)malloc(sizeof(size_t)*MAX_COUNTS);
+  short unsigned int* hist;
+  hist = (short unsigned int*)malloc(sizeof(short unsigned int)*MAX_COUNTS);
   for( i = 0; i < MAX_COUNTS; i++ ) {
     hist[i] = 0;
   }
@@ -244,7 +245,7 @@ void print_hist( KSP kmers ) {
 }
 
 void search_kmer_tree( ktnP tree_node,
-		       size_t depth, size_t* hist ) {
+		       size_t depth, short unsigned int* hist ) {
   klnP leaf_node;
   kd* data;
   if ( depth > 1 ) {
