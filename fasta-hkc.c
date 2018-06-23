@@ -10,11 +10,11 @@
 #define MAX_COUNTS (511)
 #define HKC_LEN (1027);
 typedef struct kmer_data {
-  size_t count;
+  short unsigned int count;
 } kd;
 
 void increment_kmer_count( klnP kmer );
-size_t get_kmer_count( klnP kmer );
+short unsigned int get_kmer_count( klnP kmer );
 void print_hist( KSP kmers );
 void search_kmer_tree( ktnP tree_node,
 		       size_t depth, size_t* hist );
@@ -238,7 +238,7 @@ void print_hist( KSP kmers ) {
     }
   }
   for( i = 0; i < MAX_COUNTS; i++ ) {
-    printf( "%lu %lu\n", i, hist[i] );
+    printf( "%lu %d\n", i, hist[i] );
   }
   free( hist );
 }
@@ -294,7 +294,7 @@ void search_kmer_tree( ktnP tree_node,
   }
 }
 
-size_t get_kmer_count( klnP kmer ) {
+short unsigned int get_kmer_count( klnP kmer ) {
   kd* data;
   if ( kmer == NULL ) {
     return 0;
