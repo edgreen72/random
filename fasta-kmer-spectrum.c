@@ -124,7 +124,7 @@ void add_kmers_from_seq( const ChrP seq, KSP kmers ) {
   kd* data;
   klnP kmer;
   
-  for( i = 0; i < seq->len - kmers->k; i++ ) {
+  for( i = 0; i < seq->len - kmers->k + 1; i++ ) {
     kmer = get_canonical_kmer( &seq->seq[i], kmers );
     if ( kmer == NULL ) { // new kmer or bad kmer
       kmer = add_canonical_kmer( &seq->seq[i], kmers );

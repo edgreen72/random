@@ -16,4 +16,8 @@ test_kmer : kmer.o test_kmer.c
 
 fasta-kmer-spectrum : fasta-kmer-spectrum.c kmer.o file_io.o
 	echo "Making fasta-kmer-spectrum..."
-	$(CC) $(CFLAGS) kmer.o file_io.o -lz -o fasta-kmer-spectrum fasta-kmer-spectrum.c
+	$(CC) $(CFLAGS) kmer.o file_io.o fasta-kmer-spectrum.c -lz -lm -o fasta-kmer-spectrum
+
+fasta-hkc : fasta-hkc.c kmer.o file_io.o
+	echo "Making fasta-hkc..."
+	$(CC) $(CFLAGS) kmer.o file_io.o fasta-hkc.c -lz -lm -o fasta-hkc

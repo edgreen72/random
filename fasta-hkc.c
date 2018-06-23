@@ -8,18 +8,21 @@
 
 #define NUM_TESTS (1000000)
 #define MAX_COUNTS (511)
+#define HKC_LEN (1027);
 typedef struct kmer_data {
   size_t count;
 } kd;
 
 void increment_kmer_count( klnP kmer );
+size_t get_kmer_count( klnP kmer );
 void print_hist( KSP kmers );
 void search_kmer_tree( ktnP tree_node,
 		       size_t depth, size_t* hist );
 void add_kmers_from_seq( ChrP seq, KSP kmers );
+void find_and_write_hkcs( ChrP seq, KSP kmers );
 
 void help( void ) {
-  printf( "fasta-kmer-spectrum -f <fasta file> -k <kmer length>\n" );
+  printf( "fasta-hkc -f <fasta file> -k <kmer length>\n" );
   exit( 0 );
 }
 
@@ -133,8 +136,9 @@ int main ( int argc, char* argv[] ) {
     }
   }
 
-  printf( "%lu\t.\n", ks->k );
-  fprintf( stderr, "[Reading fasta sequences for hkcs]" );
+  printf( "%lu\t.\n", kmers->k );
+  fprintf( stderr, "[Reading fasta sequences for hkcs]\n" );
+  read_status = 0;
   while( read_status == 0 ) {
     if ( gzipped ) {
       read_status = gz_read_next_fasta( fp_gz, seq );
@@ -143,7 +147,7 @@ int main ( int argc, char* argv[] ) {
       read_status = read_next_fasta( fp, seq );
     }
     if ( read_status == 0 ) {
-      find_hkcs( seq, kmers );
+      find_and_write_hkcs( seq, kmers );
     }
   }
   /* Like Elsa says, "Let it go!" */
@@ -156,7 +160,7 @@ void add_kmers_from_seq( const ChrP seq, KSP kmers ) {
   kd* data;
   klnP kmer;
   
-  for( i = 0; i < seq->len - kmers->k; i++ ) {
+  for( i = 0; i < seq->len - kmers->k + 1; i++ ) {
     kmer = get_canonical_kmer( &seq->seq[i], kmers );
     if ( kmer == NULL ) { // new kmer or bad kmer
       kmer = add_canonical_kmer( &seq->seq[i], kmers );
@@ -172,6 +176,50 @@ void add_kmers_from_seq( const ChrP seq, KSP kmers ) {
   }
 }
 
+void find_and_write_hkcs( const ChrP seq, const KSP kmers ) {
+  size_t i, hkc_start, hkc_end, cov;
+  char* HKC_seq; // place to copy the HKC for printing
+  int in_hkc = 0; // boolean - are we in an HKC at this position?
+  size_t max_hkc_len = HKC_LEN;
+  kd* data;
+  klnP kmer;
+
+  /* Initialize HKC_seq. We'll grow it later if necessary */
+  HKC_seq = (char*)malloc(sizeof(char) * (max_hkc_len+1));
+
+  for( i = 0; i < seq->len - kmers->k + 1; i++ ) {
+    kmer = get_canonical_kmer( &seq->seq[i], kmers );
+    cov = get_kmer_count( kmer );
+    if ( cov == 1 ) { // this is an HKC position
+      if ( in_hkc ) { // continuing HKC already started
+	; // keep going
+      }
+      else { // starting a new HKC
+	hkc_start = i;
+	in_hkc    = 1;
+      }
+    }
+    else { // not HKC
+      if ( in_hkc ) { // must have just ended a HKC;
+	// Therefore, i is first position after end of HKC
+	hkc_end = i + kmers->k - 1; // set hkc_end to first position
+	// outside of kmer, i.e. 0-index open ended coordinate
+	// minus one because i was the first position *outside*
+	// the HKC
+	if ( (hkc_end - hkc_start) > max_hkc_len ) {
+	  free( HKC_seq );
+	  HKC_seq = (char*)malloc(sizeof(char) *
+				  (hkc_end - hkc_start + 1));
+	}
+	strncpy( HKC_seq, &seq->seq[hkc_start], hkc_end-hkc_start );
+	HKC_seq[ hkc_end - hkc_start ] = '\0';
+	printf( "%s\t.\t.\t.\t.\t.\n", HKC_seq );
+      }
+      in_hkc = 0;
+    }
+  }
+  free( HKC_seq );
+}
 
 void print_hist( KSP kmers ) {
   size_t i, len;
@@ -246,6 +294,15 @@ void search_kmer_tree( ktnP tree_node,
   }
 }
 
+size_t get_kmer_count( klnP kmer ) {
+  kd* data;
+  if ( kmer == NULL ) {
+    return 0;
+  }
+  data = (kd*)kmer->data;
+  return data->count;
+}
+ 
 void increment_kmer_count( klnP kmer ) {
   kd* data;
   data = (kd*)kmer->data;
