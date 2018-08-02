@@ -21,3 +21,7 @@ fasta-kmer-spectrum : fasta-kmer-spectrum.c kmer.o file_io.o
 fasta-hkc : fasta-hkc.c kmer.o file_io.o
 	echo "Making fasta-hkc..."
 	$(CC) $(CFLAGS) kmer.o file_io.o fasta-hkc.c -lz -lm -o fasta-hkc
+
+het-kmer-clust: het-kmer-clust.c het-kmer-clust.h kmer.o file_io.o
+	echo "Making het-kmer-clust..."
+	$(CC) $(CFLAGS) kmer.o file_io.o het-kmer-clust.c -lz -lm -o het-kmer-clust

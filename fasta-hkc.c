@@ -6,7 +6,6 @@
 #include "kmer.h"
 #include "file_io.h"
 
-#define NUM_TESTS (1000000)
 #define MAX_COUNTS (511)
 #define HKC_LEN (1027);
 typedef struct kmer_data {
@@ -21,11 +20,16 @@ void search_kmer_tree( ktnP tree_node,
 		       short unsigned int* hist );
 void add_kmers_from_seq( ChrP seq, KSP kmers );
 void find_and_write_hkcs( ChrP seq, KSP kmers );
+void find_and_write_HKConLongReads( const ChrP seq, const KSP kmers );
 
 void help( void ) {
-  printf( "fasta-hkc -f <fasta file> -k <kmer length>\n" );
+  printf( "fasta-hkc -f <fasta file> -k <kmer length> -l [make HKConLongReads.txt file]\n" );
+  printf( " By default, makes an HKC file.\n" );
+  printf( " If -l is given, makes an HKConLongReads output file instead.\n" );
   exit( 0 );
 }
+
+size_t HKC_num = 0; // global count of what HKC we are on
 
 int main ( int argc, char* argv[] ) {
   extern char* optarg;
@@ -43,13 +47,15 @@ int main ( int argc, char* argv[] ) {
   int gzipped     = 0;
   int read_status = 0;
   int total_read  = 0;
+  int make_hkc    = 1;
+  int make_HKConLongReads = 0;
   ChrP seq;
   char fn[MAX_FN_LEN+1];
     
   if( argc == 1 ) {
     help();
   }
-  while( (ich=getopt( argc, argv, "k:f:" )) != -1 ) {
+  while( (ich=getopt( argc, argv, "k:f:l" )) != -1 ) {
     switch(ich) {
     case 'k' :
       k = (size_t)atoi( optarg );
@@ -58,6 +64,10 @@ int main ( int argc, char* argv[] ) {
       help();
     case 'f' :
       strcpy( fn, optarg );
+      break;
+    case 'l' :
+      make_HKConLongReads = 1;
+      make_hkc = 0;
       break;
     default :
       help();
@@ -137,7 +147,10 @@ int main ( int argc, char* argv[] ) {
     }
   }
 
-  printf( "%lu\t.\n", kmers->k );
+  if ( make_hkc ) {
+    printf( "%lu\t.\n", kmers->k );
+  }
+
   fprintf( stderr, "[Reading fasta sequences for hkcs]\n" );
   read_status = 0;
   while( read_status == 0 ) {
@@ -148,7 +161,12 @@ int main ( int argc, char* argv[] ) {
       read_status = read_next_fasta( fp, seq );
     }
     if ( read_status == 0 ) {
-      find_and_write_hkcs( seq, kmers );
+      if ( make_hkc ) {
+	find_and_write_hkcs( seq, kmers );
+      }
+      if ( make_HKConLongReads ) {
+	find_and_write_HKConLongReads( seq, kmers );
+      }
     }
   }
   /* Like Elsa says, "Let it go!" */
@@ -156,7 +174,7 @@ int main ( int argc, char* argv[] ) {
 
 }
 
-void add_kmers_from_seq( const ChrP seq, KSP kmers ) {
+ void add_kmers_from_seq( const ChrP seq, KSP kmers ) {
   size_t i;
   kd* data;
   klnP kmer;
@@ -222,6 +240,47 @@ void find_and_write_hkcs( const ChrP seq, const KSP kmers ) {
   free( HKC_seq );
 }
 
+/* Takes a sequence from the input fasta file and the kmers
+   Writes out a line of the HKConLongReads */
+void find_and_write_HKConLongReads( const ChrP seq, const KSP kmers ) {
+  size_t i, hkc_start, hkc_end, cov;
+  int in_hkc = 0; // boolean - are we in an HKC at this position?
+  kd* data;
+  klnP kmer;
+
+  /* Every fasta sequence get a line, regardless of the number of
+     HKCs on it - even if there are none */
+  printf( "%s", seq->id );
+  
+  for( i = 0; i < seq->len - kmers->k + 1; i++ ) {
+    kmer = get_canonical_kmer( &seq->seq[i], kmers );
+    cov = get_kmer_count( kmer );
+    if ( cov == 1 ) { // this is an HKC position
+      if ( in_hkc ) { // continuing HKC already started
+	; // keep going
+      }
+      else { // starting a new HKC
+	hkc_start = i;
+	in_hkc    = 1;
+      }
+    }
+    else { // not HKC
+      if ( in_hkc ) { // must have just ended a HKC;
+	// Therefore, i is first position after end of HKC
+	hkc_end = i + kmers->k - 1; // set hkc_end to first position
+	// outside of kmer, i.e. 0-index open ended coordinate
+	// minus one because i was the first position *outside*
+	// the HKC
+
+	printf( " %lu %lu + %lu 100", hkc_start, hkc_end, HKC_num );
+	HKC_num++; // Update global variable
+      }
+      in_hkc = 0;
+    }
+  }
+  printf( "\n" );
+}
+ 
 void print_hist( KSP kmers ) {
   size_t i, len;
   short unsigned int* hist;
