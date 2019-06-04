@@ -250,7 +250,7 @@ void find_and_write_HKConLongReads( const ChrP seq, const KSP kmers ) {
 
   /* Every fasta sequence get a line, regardless of the number of
      HKCs on it - even if there are none */
-  printf( "%s", seq->id );
+  printf( "%s %lu", seq->id, seq->len );
   
   for( i = 0; i < seq->len - kmers->k + 1; i++ ) {
     kmer = get_canonical_kmer( &seq->seq[i], kmers );
